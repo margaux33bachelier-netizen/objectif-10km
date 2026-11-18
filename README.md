@@ -29,6 +29,15 @@ Application d'entraînement pour Margaux et Charlotte : plan de 50 semaines pour
 2. Région : **europe-west9 (Paris)**. Mode : **production**.
 3. Onglet **Règles** : remplacez tout le contenu par celui du fichier **`firestore.rules`**, en mettant vos **deux vraies adresses e-mail** (en minuscules), puis cliquez sur **Publier**.
 
+### 3 bis. Activer l'IA (Coach IA + lecture des photos d'emploi du temps)
+1. Dans le menu de gauche de Firebase : **AI Services > AI Logic**, puis **Commencer**.
+2. Choisissez le fournisseur **Gemini Developer API**. Il est gratuit et ne demande pas de carte bancaire.
+3. Suivez l'assistant jusqu'au bout. Il active **App Check**, la protection qui empêche d'autres sites d'utiliser votre IA :
+   - fournisseur : **reCAPTCHA Enterprise** ;
+   - domaine à autoriser : `margaux33bachelier-netizen.github.io`.
+4. Copiez la **clé de site** (*site key*) affichée dans le fichier **`firebase-config.js`**, à la ligne `APP_CHECK_SITE_KEY`.
+   Si l'assistant ne la montre pas, vous la trouverez dans **Build > App Check > Apps > votre application web**.
+
 ### 4. Mettre l'application en ligne avec GitHub Pages
 1. Envoyez tous les fichiers de ce dossier dans votre dépôt GitHub, avec `firebase-config.js` rempli.
 2. Sur GitHub, dans le dépôt : **Settings > Pages**. Sous « Build and deployment », choisissez **Deploy from a branch**, puis la branche **main** et le dossier **/ (root)**. Cliquez sur **Save**.
@@ -45,7 +54,7 @@ Chacune se connecte ensuite avec son e-mail et son mot de passe.
 ## Bon à savoir
 - **La date de la course** est estimée au dimanche 7 novembre 2027, car la date officielle n'est pas encore publiée. Vous pourrez la corriger dans **Réglages** : tout le plan s'ajuste automatiquement.
 - **Importer un emploi du temps :** exportez votre agenda en fichier `.ics` (Google Agenda, Outlook, Hyperplanning…) ou utilisez un `.csv` avec les colonnes `jour;début;fin;libellé`, par exemple `lundi;08:30;12:00;Cours`. Les créneaux qui se répètent chaque semaine sont reconnus.
-- **Mettre l'application à jour :** modifiez les fichiers sur GitHub. Les téléphones récupèrent la nouvelle version à la prochaine ouverture avec du réseau. En cas de changement important, modifiez aussi la ligne `const CACHE = 'run10k-v1'` dans `sw.js` (v2, v3…).
+- **Mettre l'application à jour :** modifiez les fichiers sur GitHub. Les téléphones récupèrent la nouvelle version à la prochaine ouverture avec du réseau. En cas de changement important, modifiez aussi la ligne `const CACHE = 'run10k-v2'` dans `sw.js` (v2, v3…).
 - **Coût :** le plan gratuit de Firebase (« Spark ») suffit très largement pour deux personnes. Aucune carte bancaire n'est demandée.
 
 ## Fichiers
@@ -55,4 +64,4 @@ Chacune se connecte ensuite avec son e-mail et son mot de passe.
 | `fb.js` | Connexion à Firebase (comptes + base de données) |
 | `firebase-config.js` | **À remplir** avec la configuration de votre projet Firebase |
 | `firestore.rules` | Règles de sécurité à coller dans Firebase (avec vos e-mails) |
-| `manifest.webmanifest`, `sw.js`, `icons/` | Ce qui rend l'application installable et utilisable hors ligne |
+| `manifest.webmanifest`, `sw.js`, images `.png` | Ce qui rend l'application installable et utilisable hors ligne |

@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="10 km">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>10 km de Bordeaux</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -189,7 +189,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </head>
 <body>
 <header class="top"><div class="in">
-  <div class="brand"><img src="icons/icon-192.png" alt=""><span>Objectif 10 km</span></div>
+  <div class="brand"><img src="icon-192.png" alt=""><span>Objectif 10 km</span></div>
   <nav class="tabs" id="tabs">
     <a href="#accueil" data-v="accueil"><span class="ic">🏠</span>Accueil</a>
     <a href="#calendrier" data-v="calendrier"><span class="ic">📅</span>Calendrier</a>
@@ -205,7 +205,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <div id="modal"></div>
 <div id="toast"></div>
 <div id="login" hidden><div class="box">
-  <img class="logo" src="icons/icon-192.png" alt="">
+  <img class="logo" src="icon-192.png" alt="">
   <h1>Objectif 10 km</h1>
   <p class="muted small">Connectez-vous avec le compte créé pour vous dans Firebase.</p>
   <form id="loginForm">
@@ -245,7 +245,7 @@ const DEFAULTS={
   nameA:'Margaux', nameB:'Charlotte',
   dayStart:'07:00', dayEnd:'21:30', prefWeek:'soir', prefWeekend:'matin', buffer:30
 };
-const S={settings:{...DEFAULTS},busy:{},sched:{},logs:{}};
+const S={settings:{...DEFAULTS},busy:{},sched:{},logs:{},coach:null};
 let mode='init';
 let plan=null, sched={};
 const names=()=>({a:S.settings.nameA||'Coureuse 1',b:S.settings.nameB||'Coureuse 2'});
@@ -474,7 +474,7 @@ function chain(path,fn){
 }
 function applyLocal(path,data){
   const [c,id]=path.split('/');
-  if(c==='app'){if(id==='settings')S.settings={...DEFAULTS,...(data||{})};else if(id==='schedule')S.sched={...((data&&data.map)||{})};}
+  if(c==='app'){if(id==='settings')S.settings={...DEFAULTS,...(data||{})};else if(id==='schedule')S.sched={...((data&&data.map)||{})};else if(id==='coach')S.coach=data;}
   else if(c==='busy'){if(data)S.busy[id]=data;else delete S.busy[id];}
   else if(c==='logs'){if(data)S.logs[id]=data;else delete S.logs[id];}
 }
@@ -497,6 +497,7 @@ function startSubs(){
     else renderBanner('Impossible de lire les données pour le moment.');};
   subs.push(FB.onDoc('app/settings',s=>{S.settings={...DEFAULTS,...(s.exists?s.data:{})};ok(s);renderAll();},err));
   subs.push(FB.onDoc('app/schedule',s=>{S.sched=s.exists?{...(s.data.map||{})}:{};renderAll();},err));
+  subs.push(FB.onDoc('app/coach',s=>{S.coach=s.exists?s.data:null;renderView();},err));
   subs.push(FB.onCol('busy',docs=>{const m={};docs.forEach(d=>m[d.id]=d.data);S.busy=m;renderAll();},err));
   subs.push(FB.onCol('logs',docs=>{const m={};docs.forEach(d=>m[d.id]=d.data);S.logs=m;renderAll();},err));
 }
@@ -594,6 +595,12 @@ function vHome(){
     </div>
   </div>
 
+  <div class="card" style="margin-top:16px"><h3>🤖 Coach IA</h3>
+    ${(mode==='db'&&window.FB&&window.FB.aiText)?`<p class="small muted" style="margin:-4px 0 10px">Analyse vos dernières séances et vos ressentis pour vous donner un conseil personnalisé pour la semaine.</p>
+    <div id="coachOut" class="coachbox">${S.coach&&S.coach.text?esc(S.coach.text)+`<div class="small muted" style="margin-top:8px">Conseil du ${new Date(S.coach.at).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>`:'<span class="muted">Pas encore de conseil.</span>'}</div>
+    <div class="row" style="margin-top:12px"><button class="btn acc" data-act="coach">Demander un conseil pour cette semaine</button></div>`
+    :`<p class="small muted" style="margin:0">Disponible une fois Firebase et l’IA configurés (voir le guide).</p>`}
+  </div>
   </section>`;
 }
 
@@ -678,8 +685,8 @@ function vEdt(){
     return `<div class="card who-${who}"><h3><span class="tag-${who}">●</span> ${esc(N[who])}</h3>
       <div class="drop" data-drop="${who}">
         <div><b>Téléverser un emploi du temps</b></div>
-        <div class="small muted" style="margin:4px 0 10px">Fichier calendrier <b>.ics</b> (exporté depuis Google Agenda, Outlook, Hyperplanning, l’intranet de l’école…) ou tableau <b>.csv</b> (colonnes : jour ou date ; début ; fin ; libellé).</div>
-        <label class="btn sm"><input type="file" accept=".ics,.csv,text/calendar,text/csv" data-file="${who}" hidden>Choisir un fichier</label>
+        <div class="small muted" style="margin:4px 0 10px">Fichier calendrier <b>.ics</b> (exporté depuis Google Agenda, Outlook, Hyperplanning, l’intranet de l’école…) ou tableau <b>.csv</b> (colonnes : jour ou date ; début ; fin ; libellé)${(mode==='db'&&window.FB&&window.FB.aiText)?'. <b>Photo ou capture d’écran</b> : lue par l’IA.':'.'}</div>
+        <label class="btn sm"><input type="file" accept="image/*,.ics,.csv,text/calendar,text/csv" data-file="${who}" hidden>Choisir un fichier</label>
       </div>
       ${imp?`<div style="margin-top:12px">${imp.loading?`<div class="small muted">⏳ ${esc(imp.loading)}</div>`:imp.error?`<div class="small" style="color:var(--accent)">${esc(imp.error)}</div>`:
         `<div class="small"><b>${imp.items.length} créneau(x) trouvé(s)</b> — décochez ceux à ignorer :</div>${imp.items.map((it,i)=>`<label class="slot"><input type="checkbox" data-impchk="${who}" data-i="${i}" ${it.on?'checked':''}> ${it.kind==='weekly'?`Chaque ${DAYS[it.day].toLowerCase()}`:fmtShort(pd(it.date))} · ${it.start}–${it.end} · ${esc(it.label||'')}</label>`).join('')}
@@ -817,6 +824,26 @@ function parseCSV(text){
   }
   return items;
 }
+async function shrinkImage(file){
+  try{const bmp=await createImageBitmap(file);const sc=Math.min(1,1800/Math.max(bmp.width,bmp.height));const c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(b=>r(b||file),'image/jpeg',.85));}catch(e){return file;}
+}
+async function readImage(file){
+  if(!(mode==='db'&&window.FB&&window.FB.aiText))throw new Error('La lecture des photos par l’IA n’est pas encore configurée (voir le guide). Utilisez un fichier .ics ou ajoutez les créneaux à la main.');
+  const img=await shrinkImage(file);
+  const prompt=`Tu lis un emploi du temps (photo ou capture d'écran) d'une personne. Extrais tous les créneaux où elle est OCCUPÉE (cours, travail, rendez-vous...).
+Règles :
+- Si c'est une semaine type qui se répète, mets les créneaux dans "weekly" avec "day" de 0 (lundi) à 6 (dimanche).
+- Si des dates précises sont visibles (jour/mois), mets plutôt chaque créneau dans "dated" avec "date" au format AAAA-MM-JJ. Nous sommes le ${ds(today())} : choisis l'année cohérente (${today().getFullYear()} ou ${today().getFullYear()+1}).
+- Heures au format HH:MM sur 24 h. "label" = intitulé court (max 40 caractères).
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour : {"weekly":[{"day":0,"start":"08:30","end":"12:00","label":"..."}],"dated":[{"date":"2026-11-23","start":"14:00","end":"17:00","label":"..."}]}`;
+  let txt='';try{txt=await window.FB.aiImage(prompt,img);}catch(e){throw new Error(aiErr(e));}const a=txt.indexOf('{'),b=txt.lastIndexOf('}');
+  if(a<0||b<0)throw new Error('Je n’ai pas réussi à lire cet emploi du temps. Essayez une image plus nette ou ajoutez les créneaux à la main.');
+  const j=JSON.parse(txt.slice(a,b+1));const ok=t=>/^\d{1,2}:\d{2}$/.test(t||'');const norm=t=>tstr(tm(t));
+  const items=[];
+  (j.weekly||[]).forEach(x=>{if(Number.isInteger(x.day)&&x.day>=0&&x.day<7&&ok(x.start)&&ok(x.end))items.push({kind:'weekly',day:x.day,start:norm(x.start),end:norm(x.end),label:String(x.label||'').slice(0,60)});});
+  (j.dated||[]).forEach(x=>{if(/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')&&ok(x.start)&&ok(x.end))items.push({kind:'date',date:x.date,start:norm(x.start),end:norm(x.end),label:String(x.label||'').slice(0,60)});});
+  return items;
+}
 async function handleFile(who,file){
   if(!file)return;
   importState[who]={loading:`Lecture de « ${file.name} »…`};renderView(true);
@@ -824,9 +851,9 @@ async function handleFile(who,file){
     let items;const name=file.name.toLowerCase();
     if(name.endsWith('.ics')||file.type==='text/calendar')items=parseICS(await file.text());
     else if(name.endsWith('.csv')||file.type==='text/csv')items=parseCSV(await file.text());
-    else if(file.type.startsWith('image/'))throw new Error('Les photos ne peuvent pas être lues automatiquement : exportez votre agenda en .ics, ou ajoutez les créneaux à la main ci-dessous.');
-    else if(name.endsWith('.pdf'))throw new Error('Les PDF ne peuvent pas être lus automatiquement : exportez votre agenda en .ics, ou ajoutez les créneaux à la main ci-dessous.');
-    else throw new Error('Format non reconnu. Utilisez un fichier .ics ou .csv.');
+    else if(file.type.startsWith('image/'))items=await readImage(file);
+    else if(name.endsWith('.pdf'))throw new Error('Les PDF ne peuvent pas être lus directement : faites une capture d’écran de l’emploi du temps et téléversez l’image.');
+    else throw new Error('Format non reconnu. Utilisez une image, un fichier .ics ou .csv.');
     items=items.filter(it=>tm(it.end)>tm(it.start));
     if(!items.length)throw new Error('Aucun créneau trouvé dans ce fichier.');
     items.forEach(it=>it.on=true);
@@ -838,6 +865,35 @@ async function addSlots(who,items){
   for(const it of items){const o={who,kind:it.kind,start:it.start,end:it.end,label:it.label||''};
     if(it.kind==='weekly'){o.day=it.day;if(it.from)o.from=it.from;if(it.to)o.to=it.to;}else o.date=it.date;
     await put('busy/'+uid(),o);}
+}
+
+function aiErr(e){const m=String(e&&(e.message||e.code)||'');console.warn('IA',e);
+  if(/app.?check|appCheck|attestation|recaptcha/i.test(m))return 'L’IA est bloquée par App Check : vérifiez la clé reCAPTCHA dans firebase-config.js et le domaine autorisé (voir le guide).';
+  if(/quota|429|resource.?exhausted|rate/i.test(m))return 'Limite gratuite de l’IA atteinte pour le moment, réessayez plus tard.';
+  if(/not.?signed/i.test(m))return 'Connectez-vous d’abord.';
+  if(/api.*not.*(enabled|been used)|PERMISSION_DENIED|403/i.test(m))return 'L’IA n’est pas activée dans Firebase (AI Logic). Voir le guide.';
+  if(/network|fetch|offline/i.test(m))return 'Pas de connexion internet.';
+  return 'L’IA n’a pas pu répondre ('+m.slice(0,120)+').';}
+/* ============ Coach IA ============ */
+async function askCoach(btn){
+  if(!(mode==='db'&&window.FB&&window.FB.aiText))return;
+  const N=names(),p=progress(),cw=curWeek(),left=diffDays(today(),pd(S.settings.raceDate));
+  const hist=Object.entries(S.logs).filter(([id])=>plan.byId[id]).sort((a,b)=>(a[1].date||'').localeCompare(b[1].date||'')).slice(-8).map(([id,lg])=>{const s=plan.byId[id];return `- ${lg.date} · S${s.week} ${s.title} (${s.min} min prévues, ${lg.duration||'?'} min réelles) · ${['a','b'].map(k=>{const q=lg.p?.[k]||{};return `${N[k]}: ${q.done}, ressenti ${q.rpe}/10, douleur ${q.pain}${q.km?', '+q.km+' km':''}${q.note?', note: "'+q.note+'"':''}`;}).join(' | ')}`;}).join('\n')||'(aucune séance enregistrée pour l’instant)';
+  const next=upcoming(4).map(s=>`- ${s.title} : ${s.main} (${s.min} min)${sched[s.id]?.date?' le '+sched[s.id].date:''}`).join('\n');
+  const prompt=`Tu es un coach de course à pied bienveillant. Deux sœurs débutantes (${N.a} et ${N.b}) s'entraînent ensemble pour courir les 10 km de Bordeaux le ${S.settings.raceDate} (dans ${left} jours). Elles n'avaient aucune expérience de la course.
+Plan : semaine ${cw.i}/${plan.W}, étape « ${cw.phase.long} »${cw.recov?' (semaine allégée)':''}. Progression : ${p.pct.toFixed(1)} % de la charge totale réalisée, ${p.exp.toFixed(1)} % attendus à ce jour.
+Dernières séances :
+${hist}
+Prochaines séances prévues :
+${next}
+Écris en français, en tutoyant les deux sœurs, un conseil personnalisé pour la semaine (150 mots maximum) : 1) un bilan en une phrase de leurs dernières séances, 2) deux ou trois conseils concrets pour les prochaines séances (allure, récupération, entraide entre elles, si l'une a plus de mal que l'autre), 3) une phrase de motivation. Pas de diagnostic médical : en cas de douleur forte ou persistante, conseille de consulter un médecin. Texte simple, sans markdown ni titres.`;
+  const out=$('#coachOut');btn.disabled=true;
+  try{
+    const text=((await window.FB.aiText(prompt,t=>{if(out)out.textContent=t;}))||'').trim();
+    if(text)await put('app/coach',{text,at:Date.now()});
+  }catch(e){
+    if(out)out.textContent=aiErr(e);
+  }finally{btn.disabled=false;}
 }
 
 /* ============ Événements ============ */
@@ -856,6 +912,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.impok){const who=t.dataset.impok;const items=(importState[who]?.items||[]).filter(i=>i.on);importState[who]=null;addSlots(who,items).then(()=>toast(`${items.length} créneau(x) ajouté(s).`));renderView(true);return;}
   if(t.dataset.impcancel){importState[t.dataset.impcancel]=null;renderView(true);return;}
   const act=t.dataset.act;
+  if(act==='coach')askCoach(t);
   if(act==='logout'){window.FB.logout();return;}
   if(act==='resetsched')confirmBox('Remettre toutes les séances en placement automatique ?',()=>put('app/schedule',{map:{}}));
   if(act==='resetlogs')confirmBox('Effacer tout le suivi des séances ? Cette action est définitive.',async()=>{for(const id of Object.keys(S.logs))await put('logs/'+id,null);});

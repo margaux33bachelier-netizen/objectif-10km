@@ -1,9 +1,9 @@
 // Service worker : permet d'ouvrir l'application sans connexion
 // et de l'installer comme une vraie application.
-const CACHE = 'run10k-v1';
+const CACHE = 'run10k-v2';
 const SHELL = [
   './', './index.html', './fb.js', './firebase-config.js', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon.png'
+  './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon.png'
 ];
 
 self.addEventListener('install', e => {
